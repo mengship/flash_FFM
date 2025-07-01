@@ -1,0 +1,126 @@
+/*=====================================================================+
+        表名称：  dwm.dwd_th_ffm_commission_two
+        功能描述：
+        需求来源：
+        编写人员:
+        设计日期：
+        修改日期:
+        修改人员:
+        修改原因:
+      -----------------------------------------------------------------------
+      ---存在问题：
+      -----------------------------------------------------------------------
+      +=====================================================================*/
+# drop table if exists dwm.dwd_th_ffm_commission_two;
+# create table dwm.dwd_th_ffm_commission_two as
+SELECT
+    sr.月份
+    ,sr.物理仓
+    ,员工序号
+    ,部门序号
+    ,部门
+    ,部门V2
+    ,sr.工号
+    ,Inbound
+    ,if(sr.物理仓='BST',bst.Picking,sr.Picking) Picking
+    ,if(sr.物理仓='BST',bst.Packing,sr.Packing) Packing
+    ,Outbound
+    ,B2B
+    ,PickingPacking
+    ,应出勤
+    ,出勤
+    ,迟到
+    ,旷工
+    ,年假
+    ,事假
+    ,病假
+    ,产假
+    ,丧假
+    ,婚假
+    ,公司培训假
+    ,分组
+    ,KPI
+    ,KPI系数
+    ,提成系数
+    ,超额提成
+    ,阶梯提成
+    ,支援提成
+    ,KPI提成
+    ,平均提成
+    ,KPI奖金
+    ,目标值
+    ,超额系数
+    ,入库超额系数
+    ,拣货超额系数
+    ,打包超额系数
+    ,出库超额系数
+    ,入库支援系数
+    ,拣货支援系数
+    ,打包支援系数
+    ,出库支援系数
+    ,业务罚款
+    ,现场管理罚款
+    ,考勤罚款
+    ,now() + interval -1 hour update_time
+FROM
+    (
+    SELECT
+        月份
+        ,物理仓
+        ,员工序号
+        ,部门序号
+        ,部门
+        ,部门V2
+        ,工号
+        ,Inbound
+        ,Picking
+        ,Packing
+        ,Outbound
+        ,B2B
+        ,PickingPacking
+        ,应出勤
+        ,出勤
+        ,迟到
+        ,旷工
+        ,年假
+        ,事假
+        ,病假
+        ,产假
+        ,丧假
+        ,婚假
+        ,公司培训假
+        ,分组
+        ,KPI
+        ,KPI系数
+        ,提成系数
+        ,超额提成
+        ,阶梯提成
+        ,支援提成
+        ,KPI提成
+        ,平均提成
+        ,KPI奖金
+        ,目标值
+        ,超额系数
+        ,入库超额系数
+        ,拣货超额系数
+        ,打包超额系数
+        ,出库超额系数
+        ,入库支援系数
+        ,拣货支援系数
+        ,打包支援系数
+        ,出库支援系数
+        ,业务罚款
+        ,现场管理罚款
+        ,考勤罚款
+    FROM dwm.dwd_th_ffm_commission_one
+    ) sr
+LEFT JOIN
+    (
+    SELECT
+        月份
+        ,物理仓
+        ,工号
+        ,Picking
+        ,Packing
+    FROM `tmpale`.`tmp_th_ffm_bst_stat1`
+    ) bst on sr.月份=left(bst.月份,7) AND sr.物理仓=bst.物理仓 AND sr.工号=bst.工号
