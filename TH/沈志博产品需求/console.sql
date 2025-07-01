@@ -14,7 +14,7 @@ from
             when 6 then '半年'
                 end as warehouse_fee_period_name
         , sb.express_fee_period
-         , case sb.express_fee_period
+        , case sb.express_fee_period
             when 1 then '天'
             when 2 then '周'
             when 3 then '半月'
