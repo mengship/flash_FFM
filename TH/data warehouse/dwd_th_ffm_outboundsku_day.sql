@@ -1013,11 +1013,4 @@ dwm.dwd_th_ffm_outbound_dayV2
 where outtimetype='系统商品报缺'
 and created_date>='2025-06-01'
 group by 1,2,3
-order by 1,2,4 desc ,3
-# limit 1000
-
-
-select concat(date_format(now(), '%Y'),'-',date_format(now(), '%m'),'-',date_format(now(), '%m'))
-     ,date_add(concat(date_format(now(), '%Y'),'-',date_format(now(), '%m'),'-',date_format(now(), '%m')), interval 1 day)
-     ,date_add(concat(date_format(now(), '%Y'),'-',date_format(now(), '%m'),'-',date_format(now(), '%m')), interval 2 day)
-select
+order by 1,2,4 desc ,3;
