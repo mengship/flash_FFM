@@ -1,108 +1,163 @@
-select 一级部门,二级部门,月份,sum(人力总成本),sum(提成),sum(发薪总人数) from
+SELECT
+        LEFT(payment_timeadd3h,10) 日期
+        ,warehouse_name
+        ,warehouse_detailname
+        ,seller_name
+        ,'及时推单' 指标
+        ,sum(if(platform_source='Tik Tok' and TYPE='B2C' and OrderPush_type = 'intime', 1, 0)) B2CTikTok及时推单
+        ,sum(if(platform_source='Tik Tok' and TYPE='B2C' and OrderPush_type in ('intime', 'notintime'), 1, 0)) B2CTikTok应推单
+        ,sum(if(platform_source='Tik Tok' and TYPE='B2C' and OrderPush_type = 'nooutbound', 1, 0)) B2CTikTok未及时推单
+        ,sum(if(platform_source='Tik Tok' and TYPE='B2C' and OrderPush_type = 'nopayment_time', 1, 0)) B2CTikTok无付款时间
+    FROM dwm.dwd_th_ffm_outbound_dayV2
+    where 1=1
+        and payment_timeadd3h >= date_sub(date(now() + interval -1 hour),interval 90 day)
+        and payment_timeadd3h>='2025-03-25'
+    GROUP BY 1,2,3,4
+
+select
+    dt
+    ,count(delivery_sn) cnt
+    ,count(if(buy_time is null ,delivery_sn , null)) null_value
+    ,count(if(buy_time is null ,delivery_sn , null)) / count(delivery_sn)
+from
 (
-    SELECT
-        if(gz.公司='Flash Supply Chain Management',gz.公司,gz.`work_company`) as 公司
-         ,gz.公司
-        ,gz.一级部门
-        ,gz.二级部门
-        ,gz.country as 所属国家
-        ,gz.posistion_type as 成本中心类别
-        ,gz.excel_month as 月份
-        ,gz.is_share 是否共享
-        ,count(distinct gz.staff_info_id) as 发薪总人数
-        ,avg(gz.total_working_days) as 平均出勤天数
-        ,sum(gz.base_salary) as 基本薪资
-        ,sum(gz.car) as 车补
-        ,sum(gz.food) as 饭补
-        ,sum(gz.incentive) as 提成
-        ,sum(gz.ot) as ot
-        ,sum(gz.bonus) as 年终奖
-        ,sum(gz.other_income) as 其他收入
-        ,sum(gz.total_income) as total_income
-        ,sum(gz.all_tax) as tax
-        ,sum(gz.social) as social
-        ,sum(gz.other_deduct) as 其他扣款项
-        ,sum(gz.total_deduct) as total_deduct
-        ,sum(gz.net_income) as net_pay
-        ,sum(gz.total_income)+sum(gz.social)+sum(gz.bonus) as 人力总成本
-        ,(sum(gz.total_income)+sum(gz.social)+sum(gz.bonus))/count(distinct gz.staff_info_id) as 人均成本
-        ,1 as currency
-    FROM
-        (
-        SELECT
-            sg.`staff_info_id`
-            ,sg.`excel_month`
-            ,sg.`staff_name`
-            ,sg.`job_title_name`
-            ,sg.`job_title_id`
-            ,sg.`department_id`
-            ,sg.`department_name`
-            ,sg.`company_id`
-            ,case sg.`company_id`
-                when 1 then 'Express'
-                when 2 then 'FFM'
-                when 3 then 'Flash Money'
-                when 5 then 'F-Commerce'
-                when 6 then 'Flash Pay'
-                when 7 then 'PKI'
-                when 8 then 'SOFTWARE'
-                when 9 then 'FlASH_HOME'
-                end as 'work_company'
-            ,sd.公司
-            ,sd.一级部门
-            ,sd.二级部门
-            ,case htt.value
-                when '1' then '泰国'
-                when '2' then '中国'
-                when '3' then '马来西亚'
-                when '4' then '菲律宾'
-                when '5' then '越南'
-                when '6' then '老挝'
-                when '7' then '印度尼西亚'
-                when '8' then '新加坡'
-                else '其它'
-                end as 'country'
+    select
+    delivery_sn
+    ,order_source_type
+    ,order_from
+    ,dt
+    ,source
+    ,payment_time
+    ,buy_time
+    ,platform_source
+    ,is_tiktok
+     ,case when is_tiktok is not null then 'Tik Tok'
+        when left(order_sn, 1)='5' then 'Tik Tok'
+        when platform_source in ('Tik Tok', 'TikTok') then 'Tik Tok'
+        when platform_source in ('Shopee') then 'Shopee'
+        when platform_source in ('LAZADA', 'Lazada') then 'LAZADA'
+        ELSE 'Other' end as platform_sourcev1
+        from
+    (
+    select
+            do.delivery_sn
+            ,do.order_source_type
+            ,oe.order_from
+             ,date(do.`created`) dt
             ,case
-                when srjc.type=1 then '销售'
-                when srjc.type=2 then '运营'
-                else '管理岗'
-                end as posistion_type
-            ,if(htt.value='1','否','是') as is_share
-            ,sg.`total_working_days`
-            ,sg.`salary` #基本薪资
-            ,sg.`position` #基本薪资
-            ,sg.`experience` #基本薪资
-            ,sg.`salary`+sg.`position`+sg.`experience` as base_salary
-            ,sg.`car`
-            ,sg.`food`
-            ,sg.`incentive`
-            ,sg.`ot`
-            ,sg.`tax` #SUMAllTax
-            ,sg.`tax_compensation` #SUMAllTax
-            ,sg.`tax_retirement_over5y` #SUMAllTax
-            ,sg.`tax`+sg.`tax_compensation`+sg.`tax_retirement_over5y` as all_tax
-            ,sg.`bonus`  #年终奖
-            ,sg.`total_income`
-            ,sg.`total_deduct`
-            ,sg.`total_deduct`-sg.`tax` as other_deduct
-            ,sg.`net_income`
-            ,sg.`social`
-            ,sg.`total_income` -sg.`salary` -sg.`car` -sg.`food` -sg.`bonus`-sg.`ot`  as other_income
-        FROM `backyard_pro`.`salary_gongzi` sg
-        LEFT JOIN `backyard_pro`.`hr_staff_info` hsi on hsi.`staff_info_id` =sg.`staff_info_id`
-        LEFT JOIN dwm.`dwd_hr_organizational_structure_detail` sd on sd.`id` =hsi.`node_department_id`
-        LEFT JOIN `backyard_pro`.`hr_staff_items` htt on hsi.staff_info_id=htt.staff_info_id and htt.item='WORKING_COUNTRY'
-        LEFT JOIN `backyard_pro`.`salary_report_job_config` srjc on srjc.node_department_id=hsi.node_department_id and srjc.job_title_id=hsi.job_title
-        WHERE sg.excel_month>='2023-01'
-            AND sg.`company_id`=2
-            AND sd.一级部门='Thailand Fulfillment'
-        ) gz
-    GROUP BY 1,2,3,4,5,6,7,8
-) t0
+                when do.order_source_type = 1 then 'Created - manual'
+                when do.order_source_type = 2 then 'Created - batch import'
+                when do.order_source_type = 3 and oe.order_from=1000 then 'ERP_COMMON'
+                when do.order_source_type = 3 and oe.order_from=1001 then 'ERP_MABANG'
+                when do.order_source_type = 3 and oe.order_from=1002 then 'ERP_QIANYI'
+                when do.order_source_type = 3 and oe.order_from=1003 then 'ERP_JIJIA'
+                when do.order_source_type = 3 and oe.order_from=1004 then 'ERP_JST'
+                when do.order_source_type = 3 and oe.order_from=1005 then 'ERP_WDT'
+                when do.order_source_type = 3 and oe.order_from=1006 then 'ERP_DXM'
+                when do.order_source_type = 3 and oe.order_from=1007 then 'QIMEN'
+                when do.order_source_type = 3 then 'Created - API'
+                when do.order_source_type = 4 then 'Created - auto'
+                when do.order_source_type = 5 then 'Created - AI'
+                when do.order_source_type = 6 then 'Created - Push by Tmall'
+                when do.order_source_type = 8 then 'Created - Push by LGF'
+                when do.order_source_type = 9 then 'Created - Push by PDD'
+                end as erp_source
+            ,do.payment_time
+            ,do.buy_time
+            ,if(left(date_add(do.`created`, interval -60 minute), 10) <'2024-10-31', ps.`name`, i18.th) platform_source
+            ,wd.id is_tiktok
+            ,do.order_sn
+        from
+            wms_production.delivery_order do
+        left join wms_production.order_extra oe on do.id = oe.order_id
+        LEFT JOIN `wms_production`.`seller_platform_source` sps on do.`platform_source_id`=sps.`id`
+        LEFT JOIN `wms_production`.`platform_source` ps on sps.`platform_source_id`=ps.`id`
+        left join wms_production.delivery_order_extra doe on do.id = doe.delivery_order_id
+        left join wms_production.i18 on concat('deliveryOrder.salesPlatform.',doe.platform_from) = i18.key
+        left join (select delivery_order_id,mark_id from wms_production.`delivery_order_mark_relation` where mark_id in (201, 200)) domr on domr.delivery_order_id = do.id
+        left join (select id from wms_production.wordbook_detail where `wordbook_id` = 10 and (zh = 'TT3' or zh='TT')) wd on domr.mark_id=wd.id
+        where 1=1
+        and do.`created` >= convert_tz(date_sub(date(now() + interval -1 hour),interval 90 day), '+07:00', '+08:00')
+    ) t0
+) t1
+where 1=1
+and platform_sourcev1='Tik Tok'
+group by dt
+order by dt;
+
+select
+    *
+from
+dwm.dwd_th_ffm_outbound_dayV2
+where seller_name='Ondemand'
+and created_date>='2025-06-15';
+
+select
+    warehouse_name
+
+    ,seller_name
+
+    ,dt
+     ,concat('WEEK',week(dt)) 周
+     ,concat('${week_s}','-','${week_e}') 周区间
+     ,sum(B2CTikTok及时交接) B2CTikTok及时交接
+	 ,sum(B2CTikTok应交接) B2CTikTok应交接
+	 ,sum(B2CTikTok未及时交接) B2CTikTok未及时交接
+	 ,sum(B2CTikTok及时交接) / sum(B2CTikTok应交接) 交接及时率
+	 ,sum(B2CTikTok及时发货) B2CTikTok及时发货
+	 ,sum(B2CTikTok应发货) B2CTikTok应发货
+	 ,sum(B2CTikTok未及时发货) B2CTikTok未及时发货
+	 ,sum(B2CTikTok及时发货) / sum(B2CTikTok应发货) 发货及时率
+	 ,sum(B2CTikTok及时推单) B2CTikTok及时推单
+	 ,sum(B2CTikTok应推单) B2CTikTok应推单
+	 ,sum(B2CTikTok未及时推单) B2CTikTok未及时推单
+	 ,sum(B2CTikTok及时推单) / sum(B2CTikTok应推单) 推单及时率
+	 ,sum(B2CTikTok无付款时间) B2CTikTok无付款时间
+from dwm.dwm_th_ffm_ttordertimelyout_day
+where 1=1
+-- and B2CTikTok应交接 + B2CTikTok应发货 + B2CTikTok应推单>0
+and dt >= date_sub(date(now() + interval -1 hour),interval 90 day)
+and concat('WEEK',week(dt))>='WEEK26'
+and concat('WEEK',week(dt))<='WEEK26'
+and warehouse_name='BST'
 group by 1,2,3
-having 月份>='2025-01'
-and 二级部门 in('AGV Warehouse','BPL2-Bangphli Return Warehouse','BST-Bang Sao Thong Warehouse','LAS-Lasalle Material Warehouse','BKK-WH-LAS2 E-Commerce Warehouse')
+having sum(B2CTikTok应交接) + sum(B2CTikTok应发货) + sum(B2CTikTok应推单)>0
+order by dt
 ;
 
+select *
+from dwm.dwm_th_ffm_ttordertimelyout_day
+where 1=1
+-- and B2CTikTok应交接 + B2CTikTok应发货 + B2CTikTok应推单>0
+and dt >= date_sub(date(now() + interval -1 hour),interval 90 day)
+and concat('WEEK',week(dt))>='WEEK26'
+and concat('WEEK',week(dt))<='WEEK26'
+and warehouse_name='BST'
+and seller_name='Wu han xia nan yang-武汉下南洋';
 
-select * from dwm.`dwd_hr_organizational_structure_detail`
+SELECT
+        LEFT(payment_timeadd3h,10) 日期
+        ,warehouse_name
+        ,warehouse_detailname
+        ,seller_name
+        # ,erp_source
+        ,'及时推单' 指标
+        ,sum(if(platform_source='Tik Tok' and TYPE='B2C' and OrderPush_type = 'intime', 1, 0)) B2CTikTok及时推单
+        ,sum(if(platform_source='Tik Tok' and TYPE='B2C' and OrderPush_type in ('intime', 'notintime'), 1, 0)) B2CTikTok应推单
+        ,sum(if(platform_source='Tik Tok' and TYPE='B2C' and OrderPush_type = 'nooutbound', 1, 0)) B2CTikTok未及时推单
+        ,sum(if(platform_source='Tik Tok' and TYPE='B2C' and OrderPush_type = 'nobuy_time', 1, 0)) B2CTikTok无付款时间
+    FROM dwm.dwd_th_ffm_outbound_dayV2
+    where 1=1
+        and payment_timeadd3h >= '2025-06-29'
+        and payment_timeadd3h>='2025-03-25'
+        and warehouse_name='BST'
+        and seller_name='Wu han xia nan yang-武汉下南洋'
+    GROUP BY 1,2,3,4;
+
+select *
+
+    FROM dwm.dwd_th_ffm_outbound_dayV2
+    where 1=1
+        and date(payment_timeadd3h) = '2025-07-03'
+        and warehouse_name='BST'
+        and seller_name='Wu han xia nan yang-武汉下南洋'
