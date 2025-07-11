@@ -215,7 +215,8 @@ left join
     order by 3,8
 ) rule on s.name = rule.货主
 where 1=1
-    and a.billing_end between date('2025-04-01') and  date('2025-04-30')
+    and a.billing_end between date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now())-1 day),interval 1 month)
+    and date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now()) day),interval 0 month)
     and data_auditor_id=0
     and a.accounts_receivable/100>=0
     -- and date(a.business_audit_time)>='2024-05-01'
@@ -320,12 +321,15 @@ left join
         group by 1
 ) bdkd on bdkd.`billing_id` =a.`id`
 where 1=1
-    and a.billing_end between date ('2025-02-01') and  date('2025-02-28')
+    and a.billing_end between date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now())-1 day),interval 1 month)
+    and date_sub(date_sub(date_format(now(),'%y-%m-%d'),interval extract(day from now()) day),interval 0 month)
     -- and data_auditor_id=0
     and a.accounts_receivable/100>0
     -- and date(a.business_audit_time)>='2024-05-01'
     and a.status not in (0,50)
 group by 1,2;
+
+
 
 -- 飞书文档 review bill progress
 select

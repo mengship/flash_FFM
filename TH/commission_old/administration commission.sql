@@ -3,6 +3,10 @@ select
     人员信息,
     入职日期,
     离职日期,
+    dept_1_name,
+    dept_2_name,
+        dept_3_name,
+        dept_4_name,
     职位,
     应出勤,
     出勤,
@@ -25,6 +29,10 @@ from
         leave_date 离职日期,
         job_name 职位,
         is_on_job 在职状态,
+        dept_1_name,
+        dept_2_name,
+        dept_3_name,
+        dept_4_name,
         sum(fact_required_attend_flag) 应出勤,
         sum(attendance_days) 出勤,
         sum(late_flag) 迟到,
@@ -42,7 +50,7 @@ from
     where
     1=1
     -- and dept_2_name='Warehouse Audit'
-    -- and `dept_1_name` = 'Thailand Fulfillment'
+#     and `dept_1_name` = 'Thailand Fulfillment'
     and left(stat_date, 7)=substr(date_sub(now()+ interval -1 hour,interval 1 month), 1,7)
     and staff_info_id in ('626099', '681076')
     group by
@@ -55,12 +63,12 @@ from
 ) t0
 where
 1=1
-    and 应出勤 = 出勤
-    and 迟到 <= 0
-    and (
-        在职状态 = 1
-        or 离职日期 >= DATE_ADD(concat(月份, '-01'), interval 1 month)
-    )
-    and 入职日期 <= concat(月份, '-01')
+#     and 应出勤 = 出勤
+#     and 迟到 <= 0
+#     and (
+#         在职状态 = 1
+#         or 离职日期 >= DATE_ADD(concat(月份, '-01'), interval 1 month)
+#     )
+#     and 入职日期 <= concat(月份, '-01')
 ORDER BY
     应出勤 desc

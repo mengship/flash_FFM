@@ -2,7 +2,7 @@
 
 -- BST
 -- dwd_th_ffm_commission_two 跑完后跑这个
--- BST_May_Commission
+-- BST_June_Commission
 select
     月份,
     物理仓,
@@ -268,6 +268,12 @@ from
                                             sum(Packing) 分组打包
                                         FROM
                                             dwm.dwd_th_ffm_commission_two
+#                                         where 工号 in (
+#                                                 '722177',
+#                                                 '721639',
+#                                                 '721863',
+#                                                 '721864'
+#                                                         )
                                         GROUP BY
                                             月份,
                                             物理仓,
@@ -300,6 +306,12 @@ from
                                     AND sr.部门 = swd.部门
                                 where
                                     sr.物理仓 = 'BST'
+#                                     and sr.工号 in (
+#                                                     '722177',
+#                                                     '721639',
+#                                                     '721863',
+#                                                     '721864'
+#                                                             )
                             ) t7
                         ) t6
                     ) t5
@@ -314,6 +326,19 @@ from
         分组
 ) t0
 order by 部门;
+
+-- check
+    select
+        *
+from
+     dwm.dwd_th_ffm_commission_two sr
+    where 1=1
+        and 工号 in (
+'722177',
+'721639',
+'721863',
+'721864'
+        )
 
 -- excel
 -- dwd_th_ffm_commission_two 跑完后跑这个

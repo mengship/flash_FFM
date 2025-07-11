@@ -2,7 +2,7 @@
 select * from tmpale.tmp_th_ffm_BPLReturn_stat2;
 
 -- 仓经版本
--- BPL2_May_Commission
+-- BPL2_June_Commission
 select
      仓库
      , 工号
