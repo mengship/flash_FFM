@@ -1003,11 +1003,45 @@ from
 group by 1,2
 order by 1,2;
 
+
+
 select
-    created_date
-    ,warehouse_detailname
-    ,seller_name
-    ,count(distinct delivery_sn)
+    *
+from
+    dwm.dwd_th_ffm_outbound_dayV2 where delivery_sn in ('DO25070485431', 'DO25070489789');
+
+select
+    *
+from
+dwm.dim_th_ffm_warehousedetailseller_day
+where dt>='2025-07-01';
+
+select
+    *
+from
+dwm.dwm_th_ffm_ttordertimelyout_day
+where dt >='2025-07-01'
+and warehouse_detailname='AutoWarehouse-2'
+order by dt;
+
+select
+    distinct platform_source
+from
+    dwm.dwd_th_ffm_outbound_dayV2
+where created_date >='2025-01-01';
+
+
+    select
+    distinct i18.th
+ FROM `wms_production`.`delivery_order` do
+left join wms_production.delivery_order_extra doe on do.id = doe.delivery_order_id
+left join wms_production.i18 on concat('deliveryOrder.salesPlatform.',doe.platform_from) = i18.key
+#     where i18.th in ('Line', )
+;
+
+
+select
+    delivery_sn
 from
     dwm.dwd_th_ffm_outbound_dayV2
 where created_date ='2025-07-07'
