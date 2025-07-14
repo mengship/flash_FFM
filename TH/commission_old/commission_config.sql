@@ -158,7 +158,7 @@ left join -- out
 
 
 select * from tmpale.tmp_th_ffm_agv_stat1
--- tmp_th_ffm_staff_rule1
+-- datagrip_tmp_th_ffm_staff_rule1
 select
 *
 from
